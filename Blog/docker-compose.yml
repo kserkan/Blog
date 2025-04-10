@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: blogapp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: blogappdb
+      MYSQL_USER: bloguser
+      MYSQL_PASSWORD: blogpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - blognet
+
+  web:
+    build: .
+    container_name: blogapp-web
+    depends_on:
+      - mysql
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=blogappdb;user=bloguser;password=blogpass;
+    ports:
+      - "5000:8080"
+    networks:
+      - blognet
+    
+
+volumes:
+  mysql_data:
+
+networks:
+  blognet:

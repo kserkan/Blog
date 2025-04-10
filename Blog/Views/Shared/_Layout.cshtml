@@ -1,0 +1,155 @@
+﻿@using System.Security.Claims
+@using Blog.Data.Abstract
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Blog</title>
+
+    <!-- Bootstrap ve site stilleri -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Blog.styles.css" asp-append-version="true" />
+
+    <!-- Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Toastr -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+</head>
+<body>
+
+    <!-- 🔹 NAVBAR -->
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom shadow-sm mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" asp-controller="Posts" asp-action="Index">Blog</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Posts" asp-action="Index">Postlar</a>
+                        </li>
+
+                        @if (User.Identity?.IsAuthenticated == true) // Fix for CS8602
+                                               {
+                                                   var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+
+                                                   // Fix for CS0120: Use dependency injection to resolve INotificationRepository
+                                                   var notificationRepository = Context.RequestServices.GetService<INotificationRepository>();
+                                                   if (notificationRepository != null)
+                                                   {
+                                                       ViewBag.Notifications = notificationRepository.Notifications
+                                                           .Where(n => n.UserId == userId && !n.IsRead)
+                                                           .OrderByDescending(n => n.CreatedAt)
+                                                           .Take(5)
+                                                           .ToList();
+
+                                                       ViewBag.UnreadCount = ((List<Notification>)ViewBag.Notifications).Count;
+                                                   }
+                                                   else
+                                                   {
+                                                       ViewBag.Notifications = new List<Notification>();
+                                                       ViewBag.UnreadCount = 0;
+                                                   }
+
+                                                   <li class="nav-item">
+                                                       <a class="nav-link text-dark" asp-controller="Users" asp-action="Profile" asp-route-username="@User.Identity.Name">Profilim</a>
+                                                   </li>
+
+                                                   @if (User.IsInRole("admin"))
+                                                   {
+                                                       <li class="nav-item dropdown">
+                                                           <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
+                                                               Yönetim
+                                                           </a>
+                                                           <ul class="dropdown-menu">
+                                                               <li><a class="dropdown-item" asp-controller="Posts" asp-action="List">Yazı Yönetimi</a></li>
+                                                               <li><a class="dropdown-item" asp-controller="Posts" asp-action="Comments">Yorum Yönetimi</a></li>
+                                                           </ul>
+                                                       </li>
+                                                   }
+
+                                                   <li class="nav-item">
+                                                       <a class="nav-link text-dark" asp-controller="Users" asp-action="Logout">Çıkış Yap</a>
+                                                   </li>
+                                               }
+                                               else
+                                               {
+                                                   <li class="nav-item">
+                                                       <a class="nav-link text-dark" asp-controller="Users" asp-action="Login">Giriş</a>
+                                                   </li>
+                                                   <li class="nav-item">
+                                                       <a class="nav-link text-dark" asp-controller="Users" asp-action="Register">Kayıt Ol</a>
+                                                   </li>
+                                               }
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell"></i> Bildirimler
+                            @if (ViewBag.UnreadCount > 0)
+                            {
+                                <span class="badge bg-danger">@ViewBag.UnreadCount</span>
+                            }
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            @if (ViewBag.Notifications is List<Blog.Entity.Notification> notifs && notifs.Any())
+                            {
+                                foreach (var notif in notifs)
+                                {
+                                    <li class="dropdown-item small">@Html.Raw(notif.Message)</li>
+                                }
+                            }
+                            else
+                            {
+                                <li class="dropdown-item text-muted">Hiç bildiriminiz yok.</li>
+                            }
+
+                        </ul>
+                    </li>
+
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- 🔹 ANA GÖVDE -->
+    <div class="container mt-3">
+        <!-- Bildirim -->
+        @if (TempData["Message"] != null)
+        {
+            <div class="alert alert-@TempData["MessageType"] alert-dismissible fade show" role="alert">
+                @TempData["Message"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+            </div>
+        }
+
+        <!-- Sayfa içeriği -->
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- 🔹 FOOTER -->
+   
+
+    <!-- 🔹 JS Dosyaları -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Select2 & Toastr -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <!-- TinyMCE -->
+    <script src="https://cdn.tiny.cloud/1/**TSXIIBK0VR3ZZQK2QSTUWYT2P3ORPDZT3MQE6JCGQMDHZO58**/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+
+    <!-- Sayfa özel script -->
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

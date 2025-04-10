@@ -1,0 +1,99 @@
+﻿@model Blog.Models.EditProfileViewModel
+@{
+    ViewData["Title"] = "Profil";
+}
+
+<div class="container mt-4">
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-@TempData["MessageType"] alert-dismissible fade show" role="alert">
+            @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow mb-4">
+                <div class="row g-0">
+                    <div class="col-md-4 text-center p-4 bg-light">
+                        <img src="~/img/@Model.Image" alt="Avatar" class="rounded-circle shadow mb-3"
+                             style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #dee2e6;" />
+
+                        <form asp-action="UpdateAvatar" asp-controller="Users" method="post" enctype="multipart/form-data" class="d-grid gap-2">
+                            <input type="file" name="AvatarFile" class="form-control" accept="image/*" required />
+                            <button type="submit" class="btn btn-outline-primary btn-sm">📷 Yeni Fotoğraf</button>
+                        </form>
+                    </div>
+                    <div class="col-md-8 p-4">
+                        <h4>@Model.Name</h4>
+                        <p class="text-muted mb-1">@Model.Email</p>
+                        <p class="small">Son güncelleme: @DateTime.Now.ToShortDateString()</p>
+
+                        <button class="btn btn-sm btn-outline-secondary mt-3" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#editProfileForm">
+                            Profili Düzenle
+                        </button>
+
+                        <div class="collapse mt-3" id="editProfileForm">
+                            <form asp-action="UpdateProfile" asp-controller="Users" method="post">
+                                <div class="mb-2">
+                                    <label asp-for="Name" class="form-label">Ad Soyad</label>
+                                    <input asp-for="Name" class="form-control" />
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label asp-for="Email" class="form-label">E-Posta</label>
+                                    <input asp-for="Email" class="form-control" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label asp-for="NewPassword" class="form-label">Yeni Şifre (isteğe bağlı)</label>
+                                    <input asp-for="NewPassword" class="form-control" />
+                                    <span asp-validation-for="NewPassword" class="text-danger"></span>
+                                </div>
+
+                                <button type="submit" class="btn btn-success btn-sm">Kaydet</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yazılar -->
+            <div class="mb-3">
+                <h5 class="mb-3">📚 Yazılarım (@Model.Posts.Count)</h5>
+                @if (Model.Posts.Any())
+                {
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                        @foreach (var post in Model.Posts)
+                        {
+                            <div class="col">
+                                <div class="card h-100 shadow-sm">
+                                    <img src="~/img/@post.Image" class="card-img-top" alt="@post.Title" style="height:180px; object-fit:cover;">
+                                    <div class="card-body">
+                                        <h6 class="card-title">@post.Title</h6>
+                                        <p class="card-text text-muted small">@post.PublishedOn.ToShortDateString() - <span class="badge bg-secondary">@post.Category?.Name</span></p>
+                                        <a href="/blogs/@post.Url" class="btn btn-sm btn-outline-primary">Görüntüle</a>
+                                        <a href="/Posts/Edit/@post.PostId" class="btn btn-sm btn-outline-warning">Düzenle</a>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">Henüz yazı eklememişsiniz.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

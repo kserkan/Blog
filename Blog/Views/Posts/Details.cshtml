@@ -1,0 +1,232 @@
+﻿@using System.Security.Claims
+@model Blog.Entity.Post
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="bg-white p-4 shadow-sm rounded">
+            <h2>@Model.Title</h2>
+            <p class="text-muted">@Model.PublishedOn.ToShortDateString() - <span class="badge bg-secondary">@Model.Category?.Name</span></p>
+            <!-- Post görseli -->
+            <img src="~/img/@Model.Image" alt="@Model.Title" class="img-fluid rounded mb-3" />
+
+            <p>@Html.Raw(Model.Content)</p>
+
+            
+            <!-- Etiketler -->
+            @if (Model.Tags != null && Model.Tags.Any())
+            {
+                <p class="mt-3">
+                    <strong>Etiketler:</strong>
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <a href="/blogs?tag=@tag.Url" class="badge bg-light text-primary border me-1">@tag.Text</a>
+                    }
+                </p>
+            }
+  
+            <h5>Yorumlar (@Model.Comments?.Count)</h5>
+            @if (Model.Comments != null && Model.Comments.Any())
+            {
+                @foreach (var comment in Model.Comments)
+                {
+                    <div id="comment-@comment.CommentId" class="d-flex align-items-start border p-2 mb-3 rounded bg-light">
+
+                        <img src="~/img/@comment.User?.Image" alt="Profil" class="rounded-circle me-3" style="width:50px; height:50px; object-fit:cover;" />
+
+                        <div class="w-100">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>@comment.User?.UserName</strong>
+                                    <small class="text-muted ms-2">@comment.PublishedOn.ToShortDateString()</small>
+                                </div>
+
+                                @if (User.Identity.IsAuthenticated &&
+                               comment.UserId == int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0"))
+                                {
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editCommentModal"
+                                            onclick="fillCommentModal(@comment.CommentId, '@Html.Raw(comment.Text.Replace("'", "\\'"))')">
+                                        Düzenle
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteCommentModal"
+                                            onclick="prepareDeleteModal(@comment.CommentId)">
+                                        Sil
+                                    </button>
+                                }
+
+
+                            </div>
+
+                            <p id="comment-text-@comment.CommentId" class="mb-0 mt-1">@comment.Text</p>
+
+                        </div>
+                    </div>
+                }
+
+            }
+            else
+            {
+                <p class="text-muted">Henüz yorum yapılmamış.</p>
+            }
+
+            @if (User.Identity.IsAuthenticated)
+            {
+                <form id="commentForm" class="mt-3">
+                    <input type="hidden" name="PostId" value="@Model.PostId" />
+                    <textarea name="Text" class="form-control mb-2" rows="3" placeholder="Yorumunuzu yazın..."></textarea>
+                    <button type="submit" class="btn btn-primary">Yorum Yap</button>
+                </form>
+
+                <script>
+                    $("#commentForm").submit(function (e) {
+                        e.preventDefault();
+                        var data = $(this).serialize();
+                        $.post("/Posts/AddComment", data, function (response) {
+                            location.reload();
+                        });
+                    });
+                </script>
+
+            }
+            else
+            {
+                <p><a href="/Users/Login">Yorum yapabilmek için giriş yapmalısınız.</a></p>
+            }
+        </div>
+    </div>
+</div>
+<!-- Yorum Düzenleme Modal -->
+<div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editCommentForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCommentModalLabel">Yorumu Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editCommentId" name="CommentId" />
+                    <textarea name="Text" id="editCommentText" class="form-control" rows="4" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Yorum Silme Modal -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1" aria-labelledby="deleteCommentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCommentModalLabel">Yorumu Sil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Bu yorumu silmek istediğinizden emin misiniz?
+                <input type="hidden" id="deleteCommentId" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" onclick="deleteComment()">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function () {
+            $("#commentForm").submit(function (e) {
+                e.preventDefault();
+                var data = $(this).serialize();
+                $.post("/Posts/AddComment", data, function (response) {
+                    location.reload();
+                }).fail(function (xhr) {
+                    alert("Yorum eklenemedi: " + xhr.responseText);
+                });
+            });
+                    $.post("/Posts/AddComment", data, function (response) {
+            var html = `<div class="border p-2 mb-2">
+                <strong>${response.username}</strong> - <small class="text-muted">${new Date(response.publishedOn).toLocaleDateString()}</small>
+                <p class="mb-0">${response.text}</p>
+            </div>`;
+            $("#commentForm").before(html);
+            $("#commentForm textarea").val("");
+        });
+
+        });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        function fillCommentModal(id, text) {
+            $('#editCommentId').val(id);
+            $('#editCommentText').val(text);
+        }
+
+        $('#editCommentForm').submit(function (e) {
+            e.preventDefault();
+
+            const id = $('#editCommentId').val();
+            const text = $('#editCommentText').val();
+
+            $.ajax({
+                url: '/Posts/EditComment',
+                type: 'POST',
+                data: {
+                    CommentId: id,
+                    Text: text
+                },
+                success: function (res) {
+                    if (res.success) {
+                        $('#comment-text-' + id).text(text);
+                        $('#editCommentModal').modal('hide');
+                    } else {
+                        alert(res.message || "Güncelleme başarısız.");
+                    }
+                },
+                error: function (xhr) {
+                    alert("Hata oluştu: " + xhr.responseText);
+                }
+            });
+        });
+    </script>
+    <script>
+        // Silinecek yorumu modal’a gönder
+        function prepareDeleteModal(commentId) {
+            $('#deleteCommentId').val(commentId);
+        }
+
+        // AJAX ile yorumu sil
+        function deleteComment() {
+            const commentId = $('#deleteCommentId').val();
+
+            $.ajax({
+                url: '/Posts/DeleteComment',
+                type: 'POST',
+                data: { id: commentId },
+                success: function (res) {
+                    if (res.success) {
+                        $('#comment-' + commentId).remove();
+                        $('#deleteCommentModal').modal('hide');
+                    } else {
+                        alert(res.message || "Yorum silinemedi.");
+                    }
+                },
+                error: function (xhr) {
+                    alert("Hata: " + xhr.responseText);
+                }
+            });
+        }
+    </script>
+}
+

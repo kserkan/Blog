@@ -1,0 +1,13 @@
+﻿@inject Blog.Data.Abstract.ICategoryRepository categoryRepo
+
+<ul class="list-group">
+    <li class="list-group-item">
+        <a href="/Posts/Index">Tüm Yazılar</a>
+    </li>
+    @foreach (var category in categoryRepo.Categories)
+    {
+        <li class="list-group-item">
+            <a href="/Posts/Index?categoryId=@category.CategoryId">@category.Name</a>
+        </li>
+    }
+</ul>

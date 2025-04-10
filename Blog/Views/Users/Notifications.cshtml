@@ -1,0 +1,19 @@
+﻿@model List<Blog.Entity.Notification>
+
+<h2 class="mb-4">Bildirimler</h2>
+
+<ul class="list-group">
+    @foreach (var notif in Model.OrderByDescending(n => n.CreatedAt))
+    {
+        <li class="list-group-item d-flex justify-content-between align-items-start">
+            <div>
+                <div>@Html.Raw(notif.Message)</div>
+                <small class="text-muted">@notif.CreatedAt.ToString("g")</small>
+            </div>
+            @if (!notif.IsRead)
+            {
+                <span class="badge bg-warning">Yeni</span>
+            }
+        </li>
+    }
+</ul>

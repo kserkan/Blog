@@ -1,0 +1,26 @@
+﻿@model Blog.Entity.Comment
+
+<div class="modal fade" id="editCommentModal" tabindex="-1" aria-labelledby="editCommentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editCommentForm" method="post" asp-controller="Posts" asp-action="EditComment">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editCommentModalLabel">Yorumu Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="CommentId" id="modalCommentId" />
+
+                    <div class="mb-3">
+                        <label for="modalCommentText" class="form-label">Yorum</label>
+                        <textarea name="Text" id="modalCommentText" class="form-control" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

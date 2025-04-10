@@ -1,0 +1,233 @@
+﻿@model Blog.Models.PostViewModel
+
+<div class="row">
+    <div class="col-lg-8">
+
+        @if (User.Identity.IsAuthenticated)
+        {
+            <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#createModal">
+                <i class="bi bi-plus-circle"></i> Yeni Yazı Ekle
+            </button>
+        }
+
+        <form asp-action="Index" method="get" class="row g-2 mb-4 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Ara</label>
+                <input type="text" name="search" value="@Context.Request.Query["search"]"
+                       class="form-control" placeholder="Yazı başlığı veya içerik..." />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Kategori</label>
+                @if (ViewBag.Categories is List<Blog.Entity.Blog.Entity.Category> categories)
+                {
+                    <select name="categoryId" class="form-select">
+                        <option value="">Tüm Kategoriler</option>
+                        @foreach (var cat in categories)
+                        {
+                            <option value="@cat.CategoryId" selected="@(cat.CategoryId.ToString() == Context.Request.Query["categoryId"] ? "selected" : null)">
+                                @cat.Name
+                            </option>
+                        }
+                    </select>
+                }
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-filter"></i> Filtrele
+                </button>
+            </div>
+        </form>
+
+        @foreach (var post in Model.Posts)
+        {
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img src="~/img/@post.Image" class="img-fluid rounded-start" alt="@post.Title" />
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <a href="/blogs/@post.Url" class="text-decoration-none text-dark fw-bold">@post.Title</a>
+                            </h5>
+                            <p class="card-text text-muted">@post.Description</p>
+                            <p class="card-text small">
+                                <span class="badge bg-secondary">@post.Category?.Name</span>
+                                <span class="ms-2 text-muted">@post.PublishedOn.ToShortDateString()</span> |
+                                <span class="text-muted">@post.ViewCount görüntüleme</span> |
+                                <span class="text-muted">@post.Comments?.Count yorum</span>
+                            </p>
+                            @if (post.Tags != null && post.Tags.Any())
+                            {
+                                <div class="mt-2">
+                                    @foreach (var tag in post.Tags)
+                                    {
+                                        <a href="/blogs?tag=@tag.Url" class="badge bg-light text-primary border me-1">@tag.Url</a>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <nav aria-label="Sayfalar" class="mt-4">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" href="?page=@i">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+
+    <div class="col-lg-4">
+        <vc:tags-menu></vc:tags-menu>
+        <vc:new-posts></vc:new-posts>
+
+        <div class="mt-4">
+            @Html.Partial("_CategoryMenu")
+        </div>
+    </div>
+</div>
+
+<!-- Modal Yeni Yazı -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="createPostForm" asp-controller="Posts" asp-action="Create" method="post" enctype="multipart/form-data">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="createModalLabel">Yeni Yazı Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="Title" class="form-label">Başlık</label>
+                            <input type="text" name="Title" class="form-control" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="Url" class="form-label">Url (bağlantı)</label>
+                            <input type="text" name="Url" class="form-control" required />
+                        </div>
+                        <div class="col-12">
+                            <label for="Content" class="form-label">İçerik</label>
+                            <textarea id="Content" name="Content" class="form-control" rows="5"></textarea> <!-- required kaldırıldı -->
+
+                        </div>
+                        <div class="col-md-6">
+                            <label for="CategoryId" class="form-label">Kategori</label>
+                            <select name="CategoryId" class="form-select" required>
+                                <option value="">Kategori seçin</option>
+                                @if (ViewBag.Categories is List<Blog.Entity.Blog.Entity.Category> cats)
+                                {
+                                    foreach (var cat in cats)
+                                    {
+                                        <option value="@cat.CategoryId">@cat.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="Tags" class="form-label">Etiketler</label>
+                            <select id="Tags" name="Tags" class="form-select" multiple>
+
+                                @if (ViewBag.AllTags is List<string> tags)
+                                {
+                                    foreach (var tag in tags)
+                                    {
+                                        <option value="@tag">@tag</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label for="ImageFile" class="form-label">Görsel Yükle</label>
+                            <input type="file" name="ImageFile" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Kaydet</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Scriptler -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.tiny.cloud/1/tsxiibk0vr3zzqk2qstuwyt2p3orpdzt3mqe6jcgqmdhzo58/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        $('#createModal').on('shown.bs.modal', function () {
+            if (tinymce.get("Content")) tinymce.get("Content").remove();
+
+            tinymce.init({
+                selector: '#Content',
+                language: 'tr',
+                height: 400,
+                plugins: 'lists link image code',
+                toolbar: 'undo redo | bold italic | bullist numlist | alignleft aligncenter alignright | link image | code',
+                branding: false
+            });
+
+            $('#Tags').select2({
+                tags: true,
+                tokenSeparators: [',']
+            });
+        });
+
+        $('#createModal form').submit(function (e) {
+            e.preventDefault();
+            tinymce.triggerSave();
+
+            const contentVal = $('#Content').val();
+            if (!contentVal.trim()) {
+                toastr.error("İçerik alanı boş olamaz.");
+                return false;
+            }
+
+            const formData = new FormData(this);
+            const tags = $('#Tags').val();
+            formData.append("Tags", tags.join(','));
+
+            $.ajax({
+                url: '/Posts/Create',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.success) {
+                        toastr.success(res.message);
+                        $('#createModal').modal('hide');
+
+                        // modal içindeki inputları temizle
+                        $('#createModal form')[0].reset();
+                        $('#Tags').val(null).trigger('change');
+                        tinymce.get("Content").setContent("");
+
+                        // istersen sayfayı yenile:
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        toastr.error(res.message || "Yazı eklenemedi.");
+                    }
+                },
+                error: function () {
+                    toastr.error("Sunucu hatası. Lütfen tekrar deneyin.");
+                }
+            });
+
+            return false;
+        });
+    });
+</script>
+

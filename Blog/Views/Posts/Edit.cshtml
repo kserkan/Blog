@@ -1,0 +1,81 @@
+﻿@model Blog.Entity.Post
+
+<h2 class="mb-4">Yazıyı Düzenle</h2>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="PostId" />
+
+    <div class="mb-3">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Content" class="form-label"></label>
+        <textarea asp-for="Content" id="Content" class="form-control" rows="6"></textarea> 
+        <span asp-validation-for="Content" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CategoryId" class="form-label">Kategori</label>
+        <select asp-for="CategoryId" class="form-select">
+            @if (ViewBag.Categories is List<Blog.Entity.Blog.Entity.Category> categories)
+            {
+                foreach (var cat in categories)
+                {
+                    <option value="@cat.CategoryId" selected="@(Model.CategoryId == cat.CategoryId ? "selected" : null)">
+                        @cat.Name
+                    </option>
+                }
+            }
+        </select>
+        <span asp-validation-for="CategoryId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Mevcut Görsel:</label><br />
+        <img src="~/img/@Model.Image" class="img-thumbnail mb-2" style="max-height:150px;" />
+    </div>
+
+    <div class="mb-3">
+        <label for="ImageFile" class="form-label">Yeni Görsel Yükle</label>
+        <input type="file" name="ImageFile" class="form-control" />
+    </div>
+
+    
+
+    <button type="submit" class="btn btn-primary">Güncelle</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <script>
+        tinymce.init({
+            selector: '#Content',
+            language: 'tr',
+            height: 400,
+            plugins: 'lists link image code',
+            toolbar: 'undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | code',
+            branding: false,
+            readonly: false
+        });
+
+        $(document).ready(function () {
+            $('#TagsSelect').select2({
+                tags: true,
+                tokenSeparators: [',']
+            });
+
+            $('form').submit(function () {
+                var selectedTags = $('#TagsSelect').val();
+                $('#TagsHidden').val(selectedTags.join(','));
+            });
+        });
+    </script>
+}

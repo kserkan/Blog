@@ -1,0 +1,15 @@
+﻿@model IEnumerable<Blog.Entity.Blog.Entity.Category>
+
+<ul class="list-group">
+    <li class="list-group-item">
+        <a asp-controller="Posts" asp-action="Index">Tüm Yazılar</a>
+    </li>
+    @foreach (var category in Model)
+    {
+        <li class="list-group-item">
+            <a asp-controller="Posts" asp-action="Index" asp-route-categoryId="@category.CategoryId">
+                @category.Name
+            </a>
+        </li>
+    }
+</ul>

@@ -1,0 +1,98 @@
+﻿@model List<Blog.Entity.Comment>
+
+@{
+    ViewData["Title"] = "Yorumlarım";
+}
+<link href="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/toastr@2.1.4/build/toastr.min.js"></script>
+
+<div class="container mt-4">
+    <h4>💬 Yorumlar (@Model.Count)</h4>
+    <div id="commentList">
+        @foreach (var comment in Model)
+        {
+            <div class="border p-3 rounded mb-3" id="comment-@comment.CommentId">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <strong>@comment.User?.UserName</strong> - <span class="text-muted">@comment.PublishedOn.ToShortDateString()</span>
+                        <p class="mb-1" id="text-@comment.CommentId">@comment.Text</p>
+                        <small class="text-muted">Yazı: <a href="/blogs/@comment.Post?.Url">@comment.Post?.Title</a></small>
+                    </div>
+                    <div class="text-end">
+                        <button class="btn btn-sm btn-warning me-1" onclick="openEditModal(@comment.CommentId, '@comment.Text.Replace("'", "\\'")')">Düzenle</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteComment(@comment.CommentId)">Sil</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">Yorumu Düzenle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editCommentId" />
+                    <textarea id="editText" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEditModal(id, text) {
+            $('#editCommentId').val(id);
+            $('#editText').val(text);
+            $('#editModal').modal('show');
+        }
+
+        $('#editForm').submit(function (e) {
+            e.preventDefault();
+            const id = $('#editCommentId').val();
+            const newText = $('#editText').val();
+
+            $.ajax({
+                url: '/Posts/EditComment',
+                type: 'POST',
+                data: { CommentId: id, Text: newText },
+                success: function (res) {
+                    $('#text-' + id).text(newText);
+                    $('#editModal').modal('hide');
+                    toastr.success("Yorum güncellendi");
+                },
+                error: function () {
+                    toastr.error("Yorum güncellenemedi");
+                }
+            });
+        });
+
+        function deleteComment(id) {
+            if (!confirm("Yorumu silmek istediğinize emin misiniz?")) return;
+
+            $.ajax({
+                url: '/Posts/DeleteComment',
+                type: 'POST',
+                data: { id: id },
+                success: function () {
+                    $('#comment-' + id).remove();
+                    toastr.warning("Yorum silindi");
+                },
+                error: function () {
+                    toastr.error("Yorum silinemedi");
+                }
+            });
+        }
+    </script>
+}

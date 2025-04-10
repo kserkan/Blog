@@ -1,0 +1,170 @@
+﻿@model List<Blog.Entity.Post>
+
+@{
+    ViewData["Title"] = "Yazılarım / Tüm Yazılar";
+}
+
+@Html.AntiForgeryToken() <!-- CSRF token -->
+
+<div class="container-fluid px-3 px-md-4 mt-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <h2 class="mb-2">Yazılarım / Tüm Yazılar</h2>
+        <span class="badge bg-info text-dark">Toplam: @Model.Count</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle text-center">
+            <thead class="table-light">
+                <tr>
+                    <th>Başlık</th>
+                    <th>Kategori</th>
+                    <th>Durum</th>
+                    <th>Tarih</th>
+                    <th style="min-width:180px;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var post in Model)
+                {
+                    <tr>
+                        <td class="text-start">@post.Title</td>
+                        <td>@post.Category?.Name</td>
+                        <td>
+                            @if (post.IsActive)
+                            {
+                                <span class="badge bg-success">Yayında</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Taslak</span>
+                            }
+                        </td>
+                        <td>@post.PublishedOn.ToShortDateString()</td>
+                        <td>
+                            <div class="d-flex justify-content-center flex-wrap gap-1">
+                                <a asp-action="Edit" asp-route-id="@post.PostId" class="btn btn-sm btn-outline-warning">Düzenle</a>
+                                <button class="btn btn-sm btn-danger me-1" onclick="deletePost(@post.PostId)">Sil</button>
+
+
+                                @if (!post.IsActive && User.IsInRole("admin"))
+                                {
+                                    <button class="btn btn-sm btn-outline-success" onclick="approvePost(@post.PostId)">Yayına Al</button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // TinyMCE + Select2 başlat
+            $('#createModal').on('shown.bs.modal', function () {
+                if (tinymce.get("Content")) {
+                    tinymce.get("Content").remove();
+                }
+                tinymce.init({
+                    selector: '#Content',
+                    language: 'tr',
+                    height: 400,
+                    plugins: 'lists link image code',
+                    toolbar: 'undo redo | bold italic | bullist numlist | alignleft aligncenter alignright | link image | code',
+                    branding: false
+                });
+
+                $('#Tags').select2({
+                    tags: true,
+                    tokenSeparators: [',']
+                });
+            });
+
+            // AJAX Submit
+            $('#createModal form').submit(function (e) {
+                e.preventDefault();
+                tinymce.triggerSave();
+
+                const contentVal = $('#Content').val().trim();
+                if (!contentVal) {
+                    toastr.error("İçerik alanı boş olamaz.");
+                    return false;
+                }
+
+                const formData = new FormData(this);
+                const tags = $('#Tags').val();
+                formData.append("Tags", tags.join(','));
+
+                $.ajax({
+                    url: '/Posts/Create',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (res) {
+                        if (res.success) {
+                            toastr.success(res.message);
+                            $('#createModal').modal('hide');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            toastr.error(res.message || "Bir hata oluştu.");
+                        }
+                    },
+                    error: function () {
+                        toastr.error("Sunucuyla iletişim kurulamadı.");
+                    }
+                });
+
+                return false;
+            });
+
+        });
+                function approvePost(id) {
+            fetch('/Posts/Approve', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    toastr.success(data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastr.error(data.message || "Bir hata oluştu.");
+                }
+            })
+            .catch(() => {
+                toastr.error("Sunucuyla bağlantı sağlanamadı.");
+            });
+        }
+                   function deletePost(id) {
+            if (!confirm("Silmek istediğinize emin misiniz?")) return;
+
+            fetch('/Posts/DeletePost', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(id) // 👈 dikkat: int tek başına JSON body oluyor
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    toastr.success(data.message);
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastr.error(data.message || "Silme başarısız.");
+                }
+            })
+            .catch(() => toastr.error("Sunucuya bağlanılamadı."));
+        }
+
+
+    </script>
+}
+
