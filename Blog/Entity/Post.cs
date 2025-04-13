@@ -29,18 +29,14 @@ namespace Blog.Entity
 
         public int ViewCount { get; set; } = 0;
 
-        // Kullanıcı ilişkisi
         public int UserId { get; set; }
         public User User { get; set; } = null!;
 
-        // Etiket ilişkisi
         public List<Tag> Tags { get; set; } = new();
 
-        // Yorum ilişkisi
         public List<Comment> Comments { get; set; } = new();
 
-        // Entity/Post.cs içinde:
-        public int CategoryId { get; set; }     // Foreign Key
+        public int CategoryId { get; set; }   
         public Category Category { get; set; } = null!;
 
     }

@@ -24,7 +24,7 @@ namespace BlogApp.Controllers
             _notificationRepository = notificationRepository;
         }
 
-        // 🔐 Şifre hashleyen yardımcı fonksiyon
+        
         private string HashPassword(string password)
         {
             using var sha256 = SHA256.Create();
@@ -98,7 +98,7 @@ namespace BlogApp.Controllers
                 new Claim(ClaimTypes.UserData, isUser.Image ?? "")
             };
 
-                    if (isUser.IsAdmin) // ✅ burası önemli
+                    if (isUser.IsAdmin) //burası önemli
                     {
                         userClaims.Add(new Claim(ClaimTypes.Role, "admin"));
                     }
@@ -178,13 +178,10 @@ namespace BlogApp.Controllers
                 await AvatarFile.CopyToAsync(stream);
             }
 
-            // Mevcut görseli silmek istersen:
-            // if (user.Image != null && user.Image != "p1.jpg")
-            //     System.IO.File.Delete(Path.Combine("wwwroot/img", user.Image));
-
+        
             // Kullanıcının görselini güncelle
             user.Image = fileName;
-            _userRepository.UpdateUser(user); // Bu metot yoksa oluşturmalısın
+            _userRepository.UpdateUser(user);
 
             TempData["Message"] = "Profil fotoğrafınız güncellendi.";
             TempData["MessageType"] = "success";
@@ -226,7 +223,7 @@ namespace BlogApp.Controllers
 
             if (!string.IsNullOrEmpty(model.NewPassword))
             {
-                user.Password = HashPassword(model.NewPassword); // Şifre hash'lenmeli
+                user.Password = HashPassword(model.NewPassword); 
             }
 
             _userRepository.UpdateUser(user);
@@ -276,6 +273,26 @@ namespace BlogApp.Controllers
 
             return View(notifications);
         }
+
+        [HttpPost]
+        [Authorize]
+        public IActionResult MarkNotificationAsRead(int id)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+
+            var notif = _notificationRepository.Notifications
+                .FirstOrDefault(n => n.Id == id && n.UserId == userId);
+
+            if (notif != null)
+            {
+                notif.IsRead = true;
+                _notificationRepository.MarkAsRead(id);
+                return Ok();
+            }
+
+            return NotFound();
+        }
+
 
     }
 }

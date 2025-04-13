@@ -115,7 +115,7 @@
                         </div>
                         <div class="col-12">
                             <label for="Content" class="form-label">İçerik</label>
-                            <textarea id="Content" name="Content" class="form-control" rows="5"></textarea> <!-- required kaldırıldı -->
+                            <textarea id="Content" name="Content" class="form-control" rows="5"></textarea> 
 
                         </div>
                         <div class="col-md-6">
@@ -159,7 +159,6 @@
     </div>
 </div>
 
-<!-- Scriptler -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.tiny.cloud/1/tsxiibk0vr3zzqk2qstuwyt2p3orpdzt3mqe6jcgqmdhzo58/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -210,12 +209,10 @@
                         toastr.success(res.message);
                         $('#createModal').modal('hide');
 
-                        // modal içindeki inputları temizle
                         $('#createModal form')[0].reset();
                         $('#Tags').val(null).trigger('change');
                         tinymce.get("Content").setContent("");
 
-                        // istersen sayfayı yenile:
                         setTimeout(() => location.reload(), 1000);
                     } else {
                         toastr.error(res.message || "Yazı eklenemedi.");

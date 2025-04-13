@@ -19,7 +19,6 @@ namespace Blog.Entity
 
         public TagColors? Color { get; set; }
 
-        // Post ilişkisi (Many-to-Many)
         public List<Post> Posts { get; set; } = new();
     }
 }

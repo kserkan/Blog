@@ -24,8 +24,6 @@ namespace Blog.Entity
         public string? Image { get; set; }
         public bool IsAdmin { get; set; } = false;
 
-
-        // İlişkiler
         public List<Post> Posts { get; set; } = new();
         public List<Comment> Comments { get; set; } = new();
     }

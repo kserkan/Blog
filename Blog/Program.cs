@@ -2,6 +2,7 @@
 using Blog.Data.Abstract;
 using Blog.Data.Concrete;
 using Blog.Data.Concrete.EfCore;
+using Blog.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -15,6 +16,11 @@ builder.Services.AddControllersWithViews();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<BlogAppContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+var apiKey = builder.Configuration["OpenAI:ApiKey"];
+builder.Services.AddScoped<OpenAIService>();
+
+builder.Services.AddHttpClient();
 
 // Repository DI
 builder.Services.AddScoped<IPostRepository, EfPostRepository>();
@@ -77,3 +83,4 @@ app.MapControllerRoute(
     pattern: "{controller=Posts}/{action=Index}/{id?}");
 
 app.Run();
+//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

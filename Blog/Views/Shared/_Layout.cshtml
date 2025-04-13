@@ -7,20 +7,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Blog</title>
 
-    <!-- Bootstrap ve site stilleri -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Blog.styles.css" asp-append-version="true" />
 
-    <!-- Select2 -->
+
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-    <!-- Toastr -->
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+
 </head>
 <body>
 
-    <!-- 🔹 NAVBAR -->
     <header>
         <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom shadow-sm mb-3">
             <div class="container-fluid">
@@ -36,7 +37,7 @@
                         </li>
 
                         @if (User.Identity?.IsAuthenticated == true) // Fix for CS8602
-                                               {
+                                               { 
                                                    var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
 
                                                    // Fix for CS0120: Use dependency injection to resolve INotificationRepository
@@ -87,36 +88,60 @@
                                                        <a class="nav-link text-dark" asp-controller="Users" asp-action="Register">Kayıt Ol</a>
                                                    </li>
                                                }
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            <i class="bi bi-bell"></i> Bildirimler
-                            @if (ViewBag.UnreadCount > 0)
-                            {
-                                <span class="badge bg-danger">@ViewBag.UnreadCount</span>
-                            }
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            @if (ViewBag.Notifications is List<Blog.Entity.Notification> notifs && notifs.Any())
-                            {
-                                foreach (var notif in notifs)
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-bell"></i> Bildirimler
+                                @if (ViewBag.UnreadCount > 0)
                                 {
-                                    <li class="dropdown-item small">@Html.Raw(notif.Message)</li>
+                                    <span class="badge bg-danger">@ViewBag.UnreadCount</span>
                                 }
-                            }
-                            else
-                            {
-                                <li class="dropdown-item text-muted">Hiç bildiriminiz yok.</li>
-                            }
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" style="min-width: 300px;">
+                                @if (ViewBag.Notifications is List<Blog.Entity.Notification> notifs && notifs.Any())
+                                {
+                                    @foreach (var notif in notifs)
+                                    {
+                                        <li class="dropdown-item small notification-item @(notif.IsRead ? "" : "fw-bold bg-light")"
+                                            data-id="@notif.Id"
+                                            style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
 
-                        </ul>
-                    </li>
+                                            <span>
+                                                @Html.Raw(notif.Message)<br />
+                                                <small class="text-muted">@notif.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                                            </span>
+
+                                            <span class="ms-2 status-icon">
+                                                @if (notif.IsRead)
+                                                {
+                                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                                }
+                                            </span>
+                                        </li>
+                                    }
+
+
+
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <a class="dropdown-item text-center text-primary" asp-controller="Users" asp-action="Notifications">
+                                            Tümünü Gör
+                                        </a>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li class="dropdown-item text-muted">Hiç bildiriminiz yok.</li>
+                                }
+                            </ul>
+                        </li>
+
 
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- 🔹 ANA GÖVDE -->
+
     <div class="container mt-3">
         <!-- Bildirim -->
         @if (TempData["Message"] != null)
@@ -127,29 +152,48 @@
             </div>
         }
 
-        <!-- Sayfa içeriği -->
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <!-- 🔹 FOOTER -->
-   
 
-    <!-- 🔹 JS Dosyaları -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
-    <!-- Select2 & Toastr -->
+
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
-    <!-- TinyMCE -->
     <script src="https://cdn.tiny.cloud/1/**TSXIIBK0VR3ZZQK2QSTUWYT2P3ORPDZT3MQE6JCGQMDHZO58**/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 
-    <!-- Sayfa özel script -->
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>
 </html>
+
+<script>
+    $(document).ready(function () {
+        $('.notification-item').click(function () {
+            const id = $(this).data('id');
+            const $item = $(this);
+
+            if ($item.hasClass('read')) return;
+
+            $.post('/Users/MarkNotificationAsRead', { id }, function () {
+                $item.removeClass('fw-bold bg-light').addClass('read');
+                $item.find('.status-icon').html('<i class="bi bi-check-circle-fill text-success"></i>');
+                const $badge = $('.bi-bell').siblings('.badge.bg-danger');
+                if ($badge.length) {
+                    let count = parseInt($badge.text());
+                    if (count > 1) $badge.text(count - 1);
+                    else $badge.remove();
+                }
+            });
+        });
+    });
+
+</script>
+
+

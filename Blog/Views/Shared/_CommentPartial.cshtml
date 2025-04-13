@@ -1,0 +1,45 @@
+﻿@using System.Security.Claims
+@model Blog.Entity.Comment
+
+
+@{
+    var currentUserId = int.Parse(Context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+    var isAdmin = Context.User.IsInRole("admin");
+    var isOwner = currentUserId == Model.UserId;
+}
+
+<div class="d-flex align-items-start">
+    <img src="~/img/@Model.User?.Image" alt="Profil" class="rounded-circle me-3" style="width:50px; height:50px; object-fit:cover;" />
+    <div class="w-100">
+        <div class="d-flex justify-content-between">
+            <div>
+                <strong>@Model.User?.UserName</strong>
+                <small class="text-muted ms-2">@Model.PublishedOn.ToShortDateString()</small>
+            </div>
+            <div class="text-end">
+                @if (isOwner || isAdmin)
+                {
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="modal" data-bs-target="#editCommentModal"
+                            onclick="fillCommentModal(@Model.CommentId, '@Model.Text.Replace("'", "\\'")')">
+                        Düzenle
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="modal" data-bs-target="#deleteCommentModal"
+                            onclick="prepareDeleteModal(@Model.CommentId)">
+                        Sil
+                    </button>
+                }
+            </div>
+        </div>
+        <p class="mb-1" id="comment-text-@Model.CommentId">@Model.Text</p>
+        <button class="btn btn-sm btn-link text-muted" onclick="showReplyForm(@Model.CommentId)">Cevapla</button>
+
+        <div id="replyForm-@Model.CommentId" class="mt-2 d-none">
+            <form onsubmit="sendReply(event, @Model.CommentId)">
+                <textarea class="form-control mb-2" name="Text" rows="2" placeholder="Yanıt yaz..." required></textarea>
+                <button type="submit" class="btn btn-sm btn-primary">Gönder</button>
+            </form>
+        </div>
+    </div>
+</div>
