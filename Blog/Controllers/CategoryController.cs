@@ -3,6 +3,8 @@ using Blog.Entity;
 using Blog.Entity.Blog.Entity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Blog.Helpers;
+using Blog.Data.Concrete.EfCore;
 
 namespace Blog.Controllers
 {
@@ -32,11 +34,10 @@ namespace Blog.Controllers
         {
             if (ModelState.IsValid)
             {
-                model.Url = model.Name.ToLower().Replace(" ", "-")
-                                    .Replace("ç", "c").Replace("ğ", "g").Replace("ı", "i")
-                                    .Replace("ö", "o").Replace("ş", "s").Replace("ü", "u");
+                model.Url = model.Name.ToSeoUrl();
 
-                var context = (_categoryRepository as Blog.Data.Concrete.EfCore.BlogAppContext) ?? throw new InvalidOperationException("EF Context bulunamadı");
+
+                var context = (_categoryRepository as BlogAppContext) ?? throw ExceptionHelper.EfContextNotFound();
                 context.Categories.Add(model);
                 context.SaveChanges();
 
@@ -60,11 +61,10 @@ namespace Blog.Controllers
         {
             if (ModelState.IsValid)
             {
-                model.Url = model.Name.ToLower().Replace(" ", "-")
-                                    .Replace("ç", "c").Replace("ğ", "g").Replace("ı", "i")
-                                    .Replace("ö", "o").Replace("ş", "s").Replace("ü", "u");
+                model.Url = model.Name.ToSeoUrl();
 
-                var context = (_categoryRepository as Blog.Data.Concrete.EfCore.BlogAppContext) ?? throw new InvalidOperationException("EF Context bulunamadı");
+
+                var context = (_categoryRepository as BlogAppContext) ?? throw ExceptionHelper.EfContextNotFound();
                 context.Categories.Update(model);
                 context.SaveChanges();
 
@@ -76,7 +76,7 @@ namespace Blog.Controllers
 
         public IActionResult Delete(int id)
         {
-            var context = (_categoryRepository as Blog.Data.Concrete.EfCore.BlogAppContext) ?? throw new InvalidOperationException("EF Context bulunamadı");
+            var context = (_categoryRepository as BlogAppContext) ?? throw ExceptionHelper.EfContextNotFound();
             var category = context.Categories.FirstOrDefault(c => c.CategoryId == id);
             if (category != null)
             {

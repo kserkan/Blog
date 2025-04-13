@@ -13,12 +13,12 @@
 
     <div class="mb-3">
         <label asp-for="Content" class="form-label"></label>
-        <textarea asp-for="Content" id="Content" class="form-control" rows="6"></textarea> 
+        <textarea asp-for="Content" class="form-control" rows="6"></textarea>
         <span asp-validation-for="Content" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
-        <label asp-for="CategoryId" class="form-label">Kategori</label>
+        <label asp-for="CategoryId" class="form-label"></label>
         <select asp-for="CategoryId" class="form-select">
             @if (ViewBag.Categories is List<Blog.Entity.Blog.Entity.Category> categories)
             {
@@ -40,10 +40,8 @@
 
     <div class="mb-3">
         <label for="ImageFile" class="form-label">Yeni Görsel Yükle</label>
-        <input type="file" name="ImageFile" class="form-control" />
+        <input type="file" name="ImageFile" id="ImageFile" class="form-control" />
     </div>
-
-    
 
     <button type="submit" class="btn btn-primary">Güncelle</button>
 </form>
@@ -51,7 +49,6 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 
-    
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 

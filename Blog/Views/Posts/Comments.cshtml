@@ -39,7 +39,8 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="editCommentId" />
-                    <textarea id="editText" class="form-control" rows="4"></textarea>
+                    <textarea name="Text" id="editCommentText" class="form-control" rows="4" required></textarea>
+
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">Güncelle</button>
@@ -52,31 +53,37 @@
 
 @section Scripts {
     <script>
-        function openEditModal(id, text) {
+                      function openEditModal(id, text) {
             $('#editCommentId').val(id);
-            $('#editText').val(text);
+            $('#editCommentText').val(text);
             $('#editModal').modal('show');
         }
 
         $('#editForm').submit(function (e) {
             e.preventDefault();
+
             const id = $('#editCommentId').val();
-            const newText = $('#editText').val();
+            const newText = $('#editCommentText').val();
 
             $.ajax({
                 url: '/Posts/EditComment',
                 type: 'POST',
                 data: { CommentId: id, Text: newText },
                 success: function (res) {
-                    $('#text-' + id).text(newText);
-                    $('#editModal').modal('hide');
-                    toastr.success("Yorum güncellendi");
+                    if (res.success) {
+                        $('#text-' + id).text(newText);
+                        $('#editModal').modal('hide');
+                        toastr.success(res.message || "Yorum güncellendi");
+                    } else {
+                        toastr.error(res.message || "Güncelleme başarısız.");
+                    }
                 },
                 error: function () {
-                    toastr.error("Yorum güncellenemedi");
+                    toastr.error("Sunucu hatası");
                 }
             });
         });
+
 
         function deleteComment(id) {
             if (!confirm("Yorumu silmek istediğinize emin misiniz?")) return;

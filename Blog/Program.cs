@@ -6,18 +6,35 @@ using Blog.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using DotNetEnv;
+
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
+Env.Load("Blog.env"); // .env yerine özel dosya adı
+
+
 // MVC
 builder.Services.AddControllersWithViews();
+
+//  Cookie ayarları (SameSite & Secure)
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.CheckConsentNeeded = context => false;
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+    options.Secure = CookieSecurePolicy.Always;
+    options.HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always;
+});
+
 
 // Veritabanı bağlantısı
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<BlogAppContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-var apiKey = builder.Configuration["OpenAI:ApiKey"];
+var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
 builder.Services.AddScoped<OpenAIService>();
 
 builder.Services.AddHttpClient();
@@ -41,6 +58,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         
         options.ClaimsIssuer = ClaimTypes.Role;
 
+        //  Cookie güvenliği
+        options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 
 var app = builder.Build();
@@ -49,10 +69,22 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+    app.UseHsts(); //  HTTP Strict Transport Security
 }
+
+app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts(); // HTTPS başlıkları devreye alınır
+}
+app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseRouting();
+
+app.UseCookiePolicy();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -83,4 +115,3 @@ app.MapControllerRoute(
     pattern: "{controller=Posts}/{action=Index}/{id?}");
 
 app.Run();
-//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

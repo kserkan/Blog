@@ -22,7 +22,7 @@ services:
     depends_on:
       - mysql
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=blogappdb;user=bloguser;password=blogpass;
       - OpenAI__ApiKey=${OPENAI_API_KEY}
