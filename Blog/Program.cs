@@ -10,11 +10,7 @@ using DotNetEnv;
 
 
 
-
 var builder = WebApplication.CreateBuilder(args);
-
-Env.Load("Blog.env"); // .env yerine özel dosya adı
-
 
 // MVC
 builder.Services.AddControllersWithViews();
@@ -34,7 +30,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<BlogAppContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
-var apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
+var apiKey = builder.Configuration["OpenAI:ApiKey"];
 builder.Services.AddScoped<OpenAIService>();
 
 builder.Services.AddHttpClient();
