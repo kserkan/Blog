@@ -5,13 +5,14 @@ using Azure;
 using Blog.Data.Abstract;
 using Blog.Data.Concrete.EfCore;
 using Blog.Entity;
+using Blog.Helpers;
 using Blog.Models;
 using Blog.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-
+using Blog.Helpers;
 namespace Blog.Controllers
 {
     public class PostsController : Controller
@@ -66,6 +67,7 @@ namespace Blog.Controllers
             }
 
             ViewBag.Categories = _categoryRepository.Categories.ToList();
+            ViewBag.TagFilter = tag;
 
             int totalPosts = await posts.CountAsync();
             var postsOnPage = await posts
@@ -247,9 +249,8 @@ namespace Blog.Controllers
                 {
                     Title = model.Title,
                     Content = model.Content,
-                    Url = model.Title.ToLower().Replace(" ", "-")
-                                           .Replace("ç", "c").Replace("ğ", "g").Replace("ı", "i")
-                                           .Replace("ö", "o").Replace("ş", "s").Replace("ü", "u"),
+                    Url = model.Title.ToSeoUrl(),
+
                     CategoryId = model.CategoryId,
                     UserId = userId,
                     PublishedOn = DateTime.Now,
@@ -336,9 +337,8 @@ namespace Blog.Controllers
             existingPost.Title = model.Title;
             existingPost.Content = model.Content;
             existingPost.CategoryId = model.CategoryId;
-            existingPost.Url = model.Title.ToLower().Replace(" ", "-")
-                                        .Replace("ç", "c").Replace("ğ", "g").Replace("ı", "i")
-                                        .Replace("ö", "o").Replace("ş", "s").Replace("ü", "u");
+            existingPost.Url = model.Title.ToSeoUrl();
+
 
             _postRrepository.EditPost(existingPost);
 
@@ -352,7 +352,7 @@ namespace Blog.Controllers
 
         [HttpPost]
         [Authorize]
-        [IgnoreAntiforgeryToken] // JSON POST olduğu için
+        [IgnoreAntiforgeryToken] // Bu endpoint'e sadece JavaScript ile JSON POST (fetch/ajax) gönderildiği için CSRF token kontrolü devre dışı bırakıldı.
         public JsonResult DeletePost([FromBody] int id)
         {
             var post = _postRrepository.Posts.FirstOrDefault(p => p.PostId == id);

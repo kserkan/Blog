@@ -5,7 +5,17 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Blog</title>
+    <title>
+        @if (!string.IsNullOrWhiteSpace(ViewData["Title"] as string))
+        {
+            @($"{ViewData["Title"]} - Blog")
+        }
+        else
+        {
+            @("Blog")
+        }
+    </title>
+
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -33,7 +43,7 @@
                 <div class="collapse navbar-collapse" id="navbarMain">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Posts" asp-action="Index">Postlar</a>
+                            <a class="nav-link text-dark" asp-controller="Posts" asp-action="Index">Yazılar</a>
                         </li>
 
                         @if (User.Identity?.IsAuthenticated == true) // Fix for CS8602

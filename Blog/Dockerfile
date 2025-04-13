@@ -33,6 +33,7 @@ COPY --from=build /app/publish .
 
 # 6. Gerekli portu aç
 EXPOSE 80
-
+EXPOSE 8080
+EXPOSE 8081
 # 7. Uygulamayı başlat
 ENTRYPOINT ["dotnet", "Blog.dll"]

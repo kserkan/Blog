@@ -37,39 +37,63 @@
                 </button>
             </div>
         </form>
-
-        @foreach (var post in Model.Posts)
+        @if (!string.IsNullOrEmpty(ViewBag.TagFilter as string))
         {
-            <div class="card mb-4 shadow-sm border-0">
-                <div class="row g-0">
-                    <div class="col-md-4">
-                        <img src="~/img/@post.Image" class="img-fluid rounded-start" alt="@post.Title" />
-                    </div>
-                    <div class="col-md-8">
-                        <div class="card-body">
-                            <h5 class="card-title">
-                                <a href="/blogs/@post.Url" class="text-decoration-none text-dark fw-bold">@post.Title</a>
-                            </h5>
-                            <p class="card-text text-muted">@post.Description</p>
-                            <p class="card-text small">
-                                <span class="badge bg-secondary">@post.Category?.Name</span>
-                                <span class="ms-2 text-muted">@post.PublishedOn.ToShortDateString()</span> |
-                                <span class="text-muted">@post.ViewCount görüntüleme</span> |
-                                <span class="text-muted">@post.Comments?.Count yorum</span>
-                            </p>
-                            @if (post.Tags != null && post.Tags.Any())
-                            {
-                                <div class="mt-2">
-                                    @foreach (var tag in post.Tags)
-                                    {
-                                        <a href="/blogs?tag=@tag.Url" class="badge bg-light text-primary border me-1">@tag.Url</a>
-                                    }
-                                </div>
-                            }
+            <div class="col-12">
+                <div class="alert alert-light border-start border-4 border-primary shadow-sm">
+                    <i class="bi bi-tag-fill me-1"></i>
+                    Etiket ile filtreleniyor:
+                    <strong class="text-primary">#@ViewBag.TagFilter</strong>
+                    <a href="/blogs" class="btn btn-sm btn-outline-secondary float-end">Filtreyi Temizle</a>
+                </div>
+            </div>
+        }
+
+
+        @if (Model.Posts == null || !Model.Posts.Any())
+        {
+            <div class="alert alert-info mt-4">
+                Aradığınız kriterlere uygun yazı bulunamadı.
+            </div>
+        }
+        else
+        {
+            foreach (var post in Model.Posts)
+            {
+                <div class="card mb-4 shadow-sm border-0">
+                    <div class="row g-0">
+                        <div class="col-md-4">
+                            <a href="/blogs/@post.Url">
+                                <img src="~/img/@post.Image" class="img-fluid rounded-start" alt="@post.Title" />
+                            </a>
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <a href="/blogs/@post.Url" class="text-decoration-none text-dark fw-bold">@post.Title</a>
+                                </h5>
+                                <p class="card-text text-muted">@post.Description</p>
+                                <p class="card-text small">
+                                    <span class="badge bg-secondary">@post.Category?.Name</span>
+                                    <span class="ms-2 text-muted">@post.PublishedOn.ToShortDateString()</span> |
+                                    <span class="text-muted">@post.ViewCount görüntüleme</span> |
+                                    <span class="text-muted">@post.Comments?.Count yorum</span>
+                                </p>
+                                @if (post.Tags != null && post.Tags.Any())
+                                {
+                                    <div class="mt-2">
+                                        @foreach (var tag in post.Tags)
+                                        {
+                                            <a href="/blogs?tag=@tag.Url" class="badge bg-light text-primary border me-1">@tag.Url</a>
+                                        }
+                                    </div>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            }
         }
 
         <nav aria-label="Sayfalar" class="mt-4">

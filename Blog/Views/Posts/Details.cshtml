@@ -190,6 +190,31 @@
             `;
         }
 
+                // ✅ Yorum Güncelleme - Modal Submit
+        $('#editCommentForm').submit(function (e) {
+            e.preventDefault();
+
+            const id = $('#editCommentId').val();
+            const newText = $('#editCommentText').val();
+
+            $.ajax({
+                url: '/Posts/EditComment',
+                type: 'POST',
+                data: { CommentId: id, Text: newText },
+                success: function (res) {
+                    if (res.success) {
+                        $('#comment-text-' + id).text(newText);
+                        $('#editCommentModal').modal('hide');
+                        toastr.success("Yorum güncellendi");
+                    } else {
+                        toastr.error(res.message || "Güncelleme başarısız.");
+                    }
+                },
+                error: function () {
+                    toastr.error("Sunucu hatası");
+                }
+            });
+        });
 
         function fillCommentModal(id, text) {
             $('#editCommentId').val(id);
