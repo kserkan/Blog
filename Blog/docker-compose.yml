@@ -25,6 +25,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=blogappdb;user=bloguser;password=blogpass;
+      - OpenAI__ApiKey=${OPENAI_API_KEY}
     ports:
       - "5000:8080"
     networks:
