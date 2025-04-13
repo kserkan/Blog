@@ -1,10 +1,12 @@
 ﻿using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Azure;
 using Blog.Data.Abstract;
 using Blog.Data.Concrete.EfCore;
 using Blog.Entity;
 using Blog.Models;
+using Blog.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -19,13 +21,20 @@ namespace Blog.Controllers
         private readonly ICategoryRepository _categoryRepository;
         private readonly ITagRepository _tagRepository;
         private readonly INotificationRepository _notificationRepository;
-        public PostsController(IPostRepository postRrepository, ICommentRepository commentRepository, ICategoryRepository categoryRepository,ITagRepository tagRepository, INotificationRepository notificationRepository)
+        private readonly OpenAIService _openAIService;
+        private readonly IUserRepository _userRepository;
+
+        public PostsController(IPostRepository postRrepository, ICommentRepository commentRepository,
+            ICategoryRepository categoryRepository,ITagRepository tagRepository, INotificationRepository notificationRepository,
+            OpenAIService openAIService,IUserRepository userRepository )
         {
             _postRrepository = postRrepository;
             _commentRepository = commentRepository;
             _categoryRepository = categoryRepository;
             _tagRepository = tagRepository;
             _notificationRepository = notificationRepository;
+            _openAIService = openAIService;
+            _userRepository = userRepository;
         }
 
         public async Task<IActionResult> Index(int? categoryId, string? search, string? tag, int page = 1)
@@ -87,7 +96,7 @@ namespace Blog.Controllers
 
             if (post == null)
             {
-                return NotFound(); // ✅ post null ise hata vermek yerine kullanıcıyı bilgilendir
+                return NotFound(); // post null ise hata vermek yerine kullanıcıyı bilgilendir
             }
 
             post.ViewCount++;
@@ -100,22 +109,54 @@ namespace Blog.Controllers
 
         [HttpPost]
         [Authorize]
-        public JsonResult AddComment(int PostId, string Text)
+        public async Task<JsonResult> AddComment(int PostId, string Text, int? ParentCommentId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var username = User.FindFirstValue(ClaimTypes.Name);
             var avatar = User.FindFirstValue(ClaimTypes.UserData);
+
+            //AI kontrolü
+            var result = await _openAIService.AnalyzeCommentAsync(Text);
+            Console.WriteLine("AI YANITI: " + result); // DEBUG
+
+
+            if (result == "hata" || result.Contains("uygunsuz"))
+            {
+                // Admine bildirim gönder
+                var adminUsers = _userRepository.Users.Where(u => u.IsAdmin).ToList();
+                Console.WriteLine("Admin Kullanıcılar: " + string.Join(", ", adminUsers.Select(u => u.UserName)));
+                foreach (var admin in adminUsers)
+                {
+                    if (admin.UserId != int.Parse(userId ?? "0"))
+                    {
+                        Console.WriteLine($"Bildirim gönderiliyor: {admin.UserName}");
+                        _notificationRepository.Create(new Notification
+                        {
+                            UserId = admin.UserId,
+                            Message = $"{username} adlı kullanıcı uygunsuz yorum denemesi yaptı: \"{Text}\""
+                        });
+                    }
+                }
+
+
+                return Json(new { success = false, message = "Yorum içeriği uygun değil. (AI kontrol başarısız olabilir)" });
+            }
+
+
+
 
             var entity = new Comment
             {
                 Text = Text,
                 PublishedOn = DateTime.Now,
                 PostId = PostId,
-                UserId = int.Parse(userId ?? "")
+                UserId = int.Parse(userId ?? "0"),
+                ParentCommentId = ParentCommentId
             };
 
             _commentRepository.CreateComment(entity);
-            // yorumdan hemen sonra
+
+            // Bildirim gönder
             var post = _postRrepository.Posts.FirstOrDefault(p => p.PostId == PostId);
             if (post != null && post.UserId != entity.UserId)
             {
@@ -128,12 +169,20 @@ namespace Blog.Controllers
 
             return Json(new
             {
+                success = true,
                 username,
                 Text,
                 entity.PublishedOn,
-                avatar
+                avatar,
+                commentId = entity.CommentId,
+                userId = entity.UserId,
+                parentCommentId = ParentCommentId
             });
         }
+
+
+
+
 
 
         [Authorize]
@@ -251,11 +300,11 @@ namespace Blog.Controllers
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
             var isAdmin = User.IsInRole("admin");
 
-            // 🔐 Admin HER yazıyı görebilmeli
+            // Admin HER yazıyı görebilmeli
             if (!isAdmin && post.UserId != userId)
                 return Forbid(); // 403 daha doğru
 
-            // ✅ Kategori verileri edit formu için gerekiyor
+            // Kategori verileri edit formu için gerekiyor
             ViewBag.Categories = _categoryRepository.Categories.ToList();
             ViewBag.AllTags = _tagRepository.Tags.Select(t => t.Text).Distinct().ToList();
 
@@ -279,7 +328,7 @@ namespace Blog.Controllers
             var userId = int.Parse(userIdStr);
             var isAdmin = User.IsInRole("admin");
 
-            // 🔐 Admin HER yazıyı düzenleyebilir
+            // Admin HER yazıyı düzenleyebilir
             if (!isAdmin && existingPost.UserId != userId)
                 return Forbid(); // 403 - giriş var ama yetki yok
 
@@ -334,7 +383,7 @@ namespace Blog.Controllers
         [IgnoreAntiforgeryToken]
         public JsonResult Approve([FromBody] JsonElement data)
         {
-            int id = data.GetProperty("id").GetInt32(); // ✅ bu şekilde erişilir
+            int id = data.GetProperty("id").GetInt32(); 
 
             var post = _postRrepository.Posts.FirstOrDefault(p => p.PostId == id);
             if (post == null)
@@ -342,7 +391,7 @@ namespace Blog.Controllers
 
             post.IsActive = true;
             _postRrepository.EditPost(post);
-            // 🔔 Bildirim gönder
+            //Bildirim gönder
             _notificationRepository.Create(new Notification
             {
                 UserId = post.UserId,

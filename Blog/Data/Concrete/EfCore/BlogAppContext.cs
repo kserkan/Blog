@@ -48,6 +48,13 @@ namespace Blog.Data.Concrete.EfCore
                 .WithOne(c => c.Post)
                 .HasForeignKey(c => c.PostId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Comment>()
+    .HasOne(c => c.ParentComment)
+    .WithMany(c => c.Replies)
+    .HasForeignKey(c => c.ParentCommentId)
+    .OnDelete(DeleteBehavior.Restrict); // Cevaplar silinirken ana yorum korunur
+
         }
     }
 }

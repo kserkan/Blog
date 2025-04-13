@@ -12,11 +12,15 @@ namespace Blog.Entity
 
         public DateTime PublishedOn { get; set; } = DateTime.Now;
 
-        // Post ilişkisi
+        // Cevaplar
+        public int? ParentCommentId { get; set; } 
+        public Comment? ParentComment { get; set; }
+        public ICollection<Comment>? Replies { get; set; }
+
+
         public int PostId { get; set; }
         public Post Post { get; set; } = null!;
 
-        // Kullanıcı ilişkisi
         public int UserId { get; set; }
         public User User { get; set; } = null!;
     }

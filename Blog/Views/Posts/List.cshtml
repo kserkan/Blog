@@ -4,7 +4,7 @@
     ViewData["Title"] = "Yazılarım / Tüm Yazılar";
 }
 
-@Html.AntiForgeryToken() <!-- CSRF token -->
+@Html.AntiForgeryToken() 
 
 <div class="container-fluid px-3 px-md-4 mt-4">
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
@@ -62,7 +62,7 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // TinyMCE + Select2 başlat
+            // TinyMCE + Select2 
             $('#createModal').on('shown.bs.modal', function () {
                 if (tinymce.get("Content")) {
                     tinymce.get("Content").remove();
@@ -82,7 +82,7 @@
                 });
             });
 
-            // AJAX Submit
+            // AJAX 
             $('#createModal form').submit(function (e) {
                 e.preventDefault();
                 tinymce.triggerSave();
@@ -150,7 +150,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(id) // 👈 dikkat: int tek başına JSON body oluyor
+                body: JSON.stringify(id) 
             })
             .then(res => res.json())
             .then(data => {
