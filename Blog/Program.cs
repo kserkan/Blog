@@ -6,24 +6,11 @@ using Blog.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using DotNetEnv;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
-
-//  Cookie ayarları (SameSite & Secure)
-builder.Services.Configure<CookiePolicyOptions>(options =>
-{
-    options.CheckConsentNeeded = context => false;
-    options.MinimumSameSitePolicy = SameSiteMode.None;
-    options.Secure = CookieSecurePolicy.Always;
-    options.HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always;
-});
-
 
 // Veritabanı bağlantısı
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -54,9 +41,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         
         options.ClaimsIssuer = ClaimTypes.Role;
 
-        //  Cookie güvenliği
-        options.Cookie.SameSite = SameSiteMode.None;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 
 var app = builder.Build();
@@ -65,22 +49,10 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts(); //  HTTP Strict Transport Security
 }
-
-app.UseHttpsRedirection();
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts(); // HTTPS başlıkları devreye alınır
-}
-app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseRouting();
-
-app.UseCookiePolicy();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
