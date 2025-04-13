@@ -2,20 +2,18 @@
 using System.Text;
 using System.Text.Json;
 using DotNetEnv;
-
 namespace Blog.Services
 {
     public class OpenAIService
     {
+        
+
         private readonly string _apiKey;
         private readonly HttpClient _httpClient;
 
-        public OpenAIService(IHttpClientFactory httpClientFactory)
+        public OpenAIService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
-            
-            Env.Load("Blog.env"); 
-            _apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-
+            _apiKey = configuration["OpenAI:ApiKey"];
             _httpClient = httpClientFactory.CreateClient();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
         }
@@ -31,12 +29,9 @@ namespace Blog.Services
                     new { role = "user", content = comment }
                 }
             };
-
-            // 👇 Neden 'uygunsuz' ve 'hata' kontrolü yapıyoruz?
-            // - Eğer yanıt 'hata' ise, bu genelde API hatası, bağlantı kopması ya da boş dönmesidir.
-            // - Eğer yanıt 'uygunsuz' içeriyorsa, bu durumda içerik spam/küfür tespit edilmiştir.
-            // Bu şekilde OpenAI modeli, Türkçe içeriklere duyarlı hale getirilmiştir.
-
+            // - Eğer "hata" ise, model düzgün cevap verememiştir (örneğin API hatası, düşük içerik kalitesi vs.)
+            // - Eğer "uygunsuz" kelimesini içeriyorsa, içerik yorum olarak eklenmemelidir.
+            // Bu kontrol, OpenAI tarafında modeli Türkçe içeriklerde "uygunsuz" anahtar kelimesini dönecek şekilde eğitmem/ayarlamam sayesinde yapılabiliyor.
             var jsonContent = JsonSerializer.Serialize(request);
             var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
@@ -50,6 +45,9 @@ namespace Blog.Services
                     Console.WriteLine("❗ OpenAI HATASI: " + result);
                     Console.WriteLine("OpenAI İsteği => " + comment);
                     Console.WriteLine("HTTP DURUM: " + response.StatusCode);
+
+
+
                     return "hata";
                 }
 
@@ -59,13 +57,13 @@ namespace Blog.Services
                     .GetProperty("message")
                     .GetProperty("content")
                     .GetString();
-
                 Console.WriteLine("OpenAI İsteği => " + comment);
                 Console.WriteLine("OpenAI API YANITI => " + answer);
-                Console.WriteLine("🧠 AI YANITI: " + answer);
 
+                Console.WriteLine("🧠 AI YANITI: " + answer);
                 return answer?.Trim().ToLower() ?? "hata";
             }
+
             catch (Exception ex)
             {
                 Console.WriteLine("⚠️ OpenAIService JSON parse hatası: " + ex.Message);
